@@ -70,16 +70,13 @@ void LED_Toggle_Task(void *pvParameters);
 #define LED_TOGGLE_TASK_PRIORITY 4
 TaskHandle_t led_toggle_task_handler;
 
-void FreeRTOS_Start(void)
-{
-  xTaskCreate((TaskFunction_t)Start_Task,
-              (char *)"Start_Task",
-              (configSTACK_DEPTH_TYPE)START_TASK_STACK_DEPTH,
-              (void *)NULL,
-              (UBaseType_t)START_TASK_PRIORITY,
-              (TaskHandle_t *)&start_task_handler);
-  vTaskStartScheduler();
-}
+//runtime stats task
+void Runtime_Stats_Task(void *pvParameters);
+#define RUNTIME_STATS_TASK_STACK_DEPTH 128
+#define RUNTIME_STATS_TASK_PRIORITY 2
+TaskHandle_t runtime_stats_task_handler;
+
+
 
 void Start_Task(void *pvParameters)
 {
@@ -90,6 +87,12 @@ void Start_Task(void *pvParameters)
               (void *)NULL,
               (UBaseType_t)LED_TOGGLE_TASK_PRIORITY,
               (TaskHandle_t *)&led_toggle_task_handler);
+  xTaskCreate((TaskFunction_t)Runtime_Stats_Task,
+              (char *)"Runtime_Stats_Task",
+              (configSTACK_DEPTH_TYPE)RUNTIME_STATS_TASK_STACK_DEPTH,
+              (void *)NULL,
+              (UBaseType_t)RUNTIME_STATS_TASK_PRIORITY,
+              (TaskHandle_t *)&runtime_stats_task_handler);
   vTaskDelete(NULL);
   taskEXIT_CRITICAL();
 }
@@ -101,6 +104,30 @@ void LED_Toggle_Task(void *pvParameters)
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
     vTaskDelay(500);
   }
+}
+
+void Runtime_Stats_Task(void *pvParameters)
+{
+  char runtime_stats_buffer[128];
+  while (1)
+  {
+    taskENTER_CRITICAL();
+    vTaskGetRunTimeStats(runtime_stats_buffer);
+    printf("%s\r\n", runtime_stats_buffer);
+    taskEXIT_CRITICAL();
+    vTaskDelay(2000);
+  }
+}
+
+void FreeRTOS_Start(void)
+{
+  xTaskCreate((TaskFunction_t)Start_Task,
+              (char *)"Start_Task",
+              (configSTACK_DEPTH_TYPE)START_TASK_STACK_DEPTH,
+              (void *)NULL,
+              (UBaseType_t)START_TASK_PRIORITY,
+              (TaskHandle_t *)&start_task_handler);
+  vTaskStartScheduler();
 }
 
 /* USER CODE END 0 */
@@ -137,6 +164,7 @@ int main(void)
   MX_TIM3_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_Base_Start_IT(&htim3);
   FreeRTOS_Start();
   /* USER CODE END 2 */
 
@@ -191,7 +219,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+volatile unsigned long ulHighFrequencyTimerTicks;
 /* USER CODE END 4 */
 
 /**
@@ -205,6 +233,10 @@ void SystemClock_Config(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
+  if (htim->Instance == TIM3)
+  {
+    ulHighFrequencyTimerTicks++;
+  }
 
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM4)
