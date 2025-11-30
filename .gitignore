@@ -107,3 +107,4 @@ FreeRTOS/MDK-ARM/FreeRTOS/usart.crf
 FreeRTOS/MDK-ARM/FreeRTOS/usart.d
 FreeRTOS/MDK-ARM/FreeRTOS/usart.o
 FreeRTOS/MDK-ARM/FreeRTOS.uvguix.IAA
+FreeRTOS/MDK-ARM/startup_stm32f103xb.lst
