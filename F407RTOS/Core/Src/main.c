@@ -62,11 +62,32 @@ void Start_Task(void *pvParameters);
 #define START_TASK_PRIORITY 1
 TaskHandle_t start_task_handler;
 
+//led toggle task
+void LED_Toggle_Task(void *pvParameters);
+#define LED_TOGGLE_TASK_STACK_DEPTH 128
+#define LED_TOGGLE_TASK_PRIORITY 4
+TaskHandle_t led_toggle_task_handler;
+
 void Start_Task(void *pvParameters)
 {
   taskENTER_CRITICAL();
+  xTaskCreate((TaskFunction_t)LED_Toggle_Task,
+            (char *)"LED_Toggle_Task",
+            (configSTACK_DEPTH_TYPE)LED_TOGGLE_TASK_STACK_DEPTH,
+            (void *)NULL,
+            (UBaseType_t)LED_TOGGLE_TASK_PRIORITY,
+            (TaskHandle_t *)&led_toggle_task_handler);
   vTaskDelete(NULL);
   taskEXIT_CRITICAL();
+}
+
+void LED_Toggle_Task(void *pvParameters)
+{
+  while (1)
+  {
+    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_1);
+    vTaskDelay(1000);
+  }
 }
 
 void FreeRTOS_Start(void)
