@@ -102,7 +102,7 @@ void LED_Toggle_Task(void *pvParameters)
   while (1)
   {
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-    vTaskDelay(500);
+    vTaskDelay(1000);
   }
 }
 
